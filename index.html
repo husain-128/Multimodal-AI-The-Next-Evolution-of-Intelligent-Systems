@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Multimodal AI Slideshow</title>
+
+<style>
+:root {
+  --bg-gradient: linear-gradient(135deg, #1a0b2e, #2b1454, #3d1c78);
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --text-primary: #ffffff;
+  --text-secondary: #d1c4e9;
+  --accent: #b388ff;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-gradient);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.slideshow {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+#slides-container {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slide {
+  position: absolute;
+  width: 90%;
+  max-width: 1100px;
+  min-height: 70vh;
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px);
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  padding: 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: all 0.6s ease;
+  align-items: center;
+  justify-items: center;
+}
+
+.slide.active {
+  opacity: 1;
+  transform: scale(1);
+  z-index: 1;
+}
+
+.slide-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.slide h1 {
+  font-size: 2.2rem;
+  margin-bottom: 16px;
+  line-height: 1.2;
+  max-width: 90%;
+}
+
+/* Bullet scrolling */
+
+.slide ul {
+  list-style: none;
+  padding-left: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.slide ul li {
+  margin-bottom: 10px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* Bullet animation */
+
+.slide.active ul li {
+  animation: fadeInUp 0.5s forwards;
+}
+
+.slide.active ul li:nth-child(1) { animation-delay: 0.2s; }
+.slide.active ul li:nth-child(2) { animation-delay: 0.4s; }
+.slide.active ul li:nth-child(3) { animation-delay: 0.6s; }
+.slide.active ul li:nth-child(4) { animation-delay: 0.8s; }
+.slide.active ul li:nth-child(5) { animation-delay: 1s; }
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.icon {
+  color: var(--accent);
+  margin-right: 8px;
+}
+
+.speaker-notes {
+  margin-top: 16px;
+  display: block;
+  font-size: 0.9rem;
+  color: #c5cae9;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+/*.toggle-notes {
+  margin-top: 10px;
+  background: none;
+  border: 1px solid var(--glass-border);
+  color: var(--accent);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}*/
+
+/* Real slide image */
+
+.slide-image {
+  width: 100%;
+  height: auto;              /* ✅ let image control its own height */
+  max-height: 420px;         /* optional limit so huge images don't explode */
+  object-fit: contain;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  display: block;
+  margin: auto;              /* center image nicely */
+}
+
+
+.controls {
+  position: absolute;
+  bottom: 24px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 40px;
+  align-items: center;
+  z-index: 10;
+}
+
+button.nav-btn {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.dots {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #7e57c2;
+  cursor: pointer;
+}
+
+.dot.active {
+  background: var(--accent);
+}
+
+.counter {
+  font-size: 0.9rem;
+  color: #c5cae9;
+}
+
+@media (max-width: 900px) {
+  .slide {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+
+
+</head>
+
+<body>
+
+<div class="slideshow">
+
+<div id="slides-container"></div>
+
+<div class="controls">
+  <button class="nav-btn" id="prev">Previous</button>
+  <div class="dots"></div>
+  <div class="counter"></div>
+  <button class="nav-btn" id="next">Next</button>
+</div>
+
+</div>
+
+<script>
+
+/* ===== YOUR SLIDE DATA (unchanged) ===== */
+
+const slideData = [
+
+/* 🔴 KEEP YOUR EXISTING 30 SLIDES HERE EXACTLY */
+/* I am shortening here to avoid message overload */
+
+{
+title: "Multimodal AI: The Next Evolution of Intelligent Systems",
+    bullets: [
+      "Combining text, images, audio, and video",
+      "Human-like machine understanding",
+      "Smarter and adaptive AI systems",
+      "Future impact of multimodal technology"
+    ],
+    notes: `Multimodal AI is a major step forward in the evolution of intelligent systems. Unlike traditional AI that works with only one type of data, multimodal AI combines text, images, audio, and video to understand the world in a more human-like way. This seminar explores how mixing different types of information helps machines become smarter and more adaptive. We will look at the technologies behind multimodal AI and how it is changing many industries. By the end, you will clearly see why multimodal AI is shaping the future of intelligent systems.`
+  },
+  {
+    title: "Seminar Programme",
+    bullets: [
+      "Introduction to Artificial Intelligence",
+      "Understanding Multimodal AI",
+      "Core technologies behind it",
+      "Real-world applications",
+      "Challenges and future outlook"
+    ],
+    notes: `This seminar starts with a short introduction to artificial intelligence and how it developed over time. Then we will explore what multimodal AI is and how it is different from traditional AI. After that, we will discuss the main technologies that make multimodal systems possible. We will also look at real-world applications in different fields. Finally, we will talk about challenges, ethical concerns, and future possibilities.`
+  },
+  {
+    title: "Introduction to Artificial Intelligence",
+    bullets: [
+      "Machines performing human-like tasks",
+      "Learning and decision-making abilities",
+      "Evolution from basic to advanced AI",
+      "Role in automation and data analysis",
+      "Foundation for multimodal systems"
+    ],
+    notes: `Artificial intelligence is about creating machines that can perform tasks that normally require human intelligence. These tasks include learning, reasoning, decision-making, and problem solving. AI has grown from simple rule-based systems to advanced deep learning models. Today, AI plays a huge role in automation and analyzing large amounts of data. Understanding these basics helps us see why multimodal AI is important.`
+  },
+  {
+    title: "History of AI",
+    bullets: [
+      "Origins in the 1950s",
+      "Early rule-based systems",
+      "AI winters and slow progress",
+      "Rise of machine learning",
+      "Path toward modern AI"
+    ],
+    notes: `AI began in the 1950s when scientists first imagined intelligent machines. Early systems depended on strict rules and logical reasoning. There were periods when progress slowed, known as AI winters. Later, improvements in computing power brought AI back to life. Machine learning then transformed AI into a powerful data-driven field. These developments prepared the path for multimodal intelligence.`
+  },
+  {
+    title: "Machine Learning Basics",
+    bullets: [
+      "Learning patterns from data",
+      "Supervised and unsupervised learning",
+      "Reinforcement learning methods",
+      "Experience-driven improvement",
+      "Core of modern AI"
+    ],
+    notes: `Machine learning is a part of AI where systems learn patterns from data instead of following fixed instructions. It includes supervised, unsupervised, and reinforcement learning methods. These approaches allow machines to improve through experience. Most modern AI applications depend on machine learning. It is also the core foundation of multimodal systems.`
+  },
+  {
+    title: "Importance of AI Today",
+    bullets: [
+      "Fast processing of big data",
+      "Improved decision-making",
+      "Used across major industries",
+      "Drives innovation and efficiency",
+      "Expands with multimodal AI"
+    ],
+    notes: `AI is now essential in many industries because it can process huge amounts of data quickly and efficiently. It improves decision-making and reduces human effort. From healthcare to finance, AI increases productivity and innovation. Many organizations depend on AI to stay competitive. Multimodal AI expands these benefits even more.`
+  },
+  {
+    title: "What is Multimodal AI",
+    bullets: [
+      "Combines multiple data types",
+      "Text, images, audio, and video",
+      "Overcomes limits of traditional AI",
+      "More accurate real-world predictions",
+      "Mimics human perception"
+    ],
+    notes: `Multimodal AI refers to systems that can process and combine different types of data like text, images, audio, and video. Traditional AI usually works with only one data type, which limits understanding. Multimodal systems bring these signals together to create a clearer picture. This leads to more accurate predictions in real-world tasks. These systems act more like human perception and are important for advanced tools like self-driving cars and smart assistants.`
+  },
+  {
+    title: "Types of Modalities",
+    bullets: [
+      "Text for language understanding",
+      "Images for visual information",
+      "Audio for sound and speech",
+      "Video for motion and visuals",
+      "Integration for deeper insight"
+    ],
+    notes: `Modalities are simply different forms of information. Text gives language meaning, images provide visual details, audio carries sound, and video combines movement with visuals. Each modality adds a unique layer of understanding. When these are integrated, AI gains a deeper and more complete view of situations.`
+  },
+  {
+    title: "Unimodal vs Multimodal Systems",
+    bullets: [
+      "Single-input vs multi-input systems",
+      "Richer context with multimodal AI",
+      "Higher accuracy and reliability",
+      "Better real-world performance",
+      "Handles complex environments"
+    ],
+    notes: `Unimodal systems rely on just one type of input, so their understanding is limited. Multimodal systems combine several inputs to gain richer context. This improves accuracy and reliability. They can solve problems that unimodal systems struggle with. That is why multimodal AI performs better in complex real-world environments.`
+  },
+  {
+    title: "How Multimodal Fusion Works",
+    bullets: [
+      "Combining multiple data sources",
+      "Early and late fusion methods",
+      "Attention-based mechanisms",
+      "Alignment of information",
+      "Key to system performance"
+    ],
+    notes: `Multimodal fusion is the method of combining data from different sources. Early fusion joins features before processing, while late fusion merges results afterward. Advanced models use attention mechanisms to focus on the most important signals. Proper fusion makes sure the information works together meaningfully. This process is key to strong multimodal performance.`
+  },
+  {
+    title: "Benefits of Multimodal AI",
+    bullets: [
+      "Increased accuracy",
+      "Strong contextual understanding",
+      "Adaptability to real situations",
+      "Natural human-machine interaction",
+      "Smarter AI solutions"
+    ],
+    notes: `Multimodal AI offers higher accuracy and stronger reliability than traditional systems. It improves understanding by checking information from multiple sources. These systems adapt better to changing real-world situations. They also allow more natural interaction between humans and machines. Overall, multimodal AI creates smarter and more dependable solutions.`
+  },
+  {
+    title: "Neural Networks",
+    bullets: [
+      "Brain-inspired computing models",
+      "Layered pattern learning",
+      "Handles complex relationships",
+      "Foundation of AI systems",
+      "Supports multimodal models"
+    ],
+    notes: `Neural networks are computing models inspired by how the human brain works. They contain layers that learn patterns step by step. Deep neural networks can capture very complex relationships. They are the foundation of most modern AI systems. Multimodal models depend heavily on these networks.`
+  },
+  {
+    title: "Transformers",
+    bullets: [
+      "Attention-based neural architecture",
+      "Efficient large data processing",
+      "Captures long-range relationships",
+      "Supports cross-modal learning",
+      "Ideal for large-scale AI"
+    ],
+    notes: `Transformers are advanced neural models built around attention mechanisms. They handle large amounts of data efficiently and understand long connections in information. Transformers drive many recent AI breakthroughs. They are especially useful for learning across different modalities. Their scalability makes them ideal for large systems.`
+  },
+  {
+    title: "Feature Fusion Methods",
+    bullets: [
+      "Combining modality features",
+      "Concatenation techniques",
+      "Attention-based fusion",
+      "Performance optimization",
+      "Stronger predictions"
+    ],
+    notes: `Feature fusion methods decide how different data types are combined. Techniques include simple joining, attention-based fusion, and more advanced tensor methods. Each method balances speed and performance. Good fusion improves how well the system understands aligned information. This leads to stronger and more accurate predictions.`
+  },
+  {
+    title: "Large Multimodal Models",
+    bullets: [
+      "Trained on massive datasets",
+      "Strong generalization ability",
+      "Foundation for many applications",
+      "High computational needs",
+      "Expanding AI limits"
+    ],
+    notes: `Large multimodal models are trained on massive datasets from many domains. They show strong ability to generalize across tasks. These models act as foundation systems for many applications. However, they require powerful hardware and high computational resources. Their development continues to expand AI capabilities.`
+  },
+  {
+    title: "Training Challenges",
+    bullets: [
+      "Dataset alignment difficulty",
+      "Heavy computational demands",
+      "Risk of overfitting",
+      "Complex evaluation methods",
+      "Ongoing research improvements"
+    ],
+    notes: `Training multimodal systems is not easy. Aligning different datasets takes careful effort. The computing requirements are very high. Problems like overfitting and evaluation remain difficult. Researchers are actively working to improve these areas.`
+  },
+  {
+    title: "Healthcare Applications",
+    bullets: [
+      "Medical image analysis",
+      "Patient data integration",
+      "Improved diagnosis support",
+      "Personalized treatment",
+      "Better patient outcomes"
+    ],
+    notes: `In healthcare, multimodal AI studies medical images, patient records, and sensor signals together. It helps doctors with diagnosis and treatment planning. These systems increase accuracy and efficiency. They support personalized medicine. Most importantly, they improve patient care.`
+  },
+  {
+    title: "Autonomous Vehicles",
+    bullets: [
+      "Sensor fusion technology",
+      "Cameras, radar, and lidar",
+      "Safe navigation systems",
+      "Reliable decision-making",
+      "Essential for self-driving cars"
+    ],
+    notes: `Self-driving cars depend on multimodal sensor fusion. Cameras, radar, and lidar work together to understand the environment. This ensures safe navigation and fast decisions. Multimodal perception makes these vehicles more reliable. It is essential for autonomous driving.`
+  },
+  {
+    title: "Virtual Assistants",
+    bullets: [
+      "Speech and text understanding",
+      "Natural user interaction",
+      "Improved responsiveness",
+      "Smarter assistants",
+      "Personalized experiences"
+    ],
+    notes: `Virtual assistants combine speech, text, and sometimes visual input. This creates smoother communication with users. Multimodal understanding makes responses more accurate. Assistants become smarter and more intuitive. They deliver more personalized experiences.`
+  },
+  {
+    title: "Education",
+    bullets: [
+      "Adaptive learning systems",
+      "Student performance analysis",
+      "Interactive learning content",
+      "Personalized feedback",
+      "Enhanced education quality"
+    ],
+    notes: `In education, multimodal AI powers adaptive learning systems. It analyzes how students interact and perform. Learning materials become more engaging and interactive. Personalized feedback improves results. Technology makes education more effective.`
+  },
+  {
+    title: "Robotics",
+    bullets: [
+      "Environmental perception",
+      "Vision and touch integration",
+      "Audio communication",
+      "Autonomous behavior",
+      "Human-like interaction"
+    ],
+    notes: `Robots use multimodal perception to understand their surroundings. Vision and touch guide their movements. Audio supports communication. These systems allow robots to act more independently. Robotics becomes closer to human behavior.`
+  },
+  {
+    title: "Media and Content Analysis",
+    bullets: [
+      "Video and audio understanding",
+      "Text integration",
+      "Better recommendation systems",
+      "Accurate sentiment analysis",
+      "Enhanced media platforms"
+    ],
+    notes: `Multimodal AI analyzes video, audio, and text together. This improves how content is understood. Recommendation systems become smarter. Sentiment analysis becomes more accurate. Media platforms benefit greatly from this technology.`
+  },
+  {
+    title: "Data Bias",
+    bullets: [
+      "Impact of biased datasets",
+      "Risk of unfair outcomes",
+      "Amplification across modalities",
+      "Need for ethical balance",
+      "Responsible AI development"
+    ],
+    notes: `Bias in datasets can strongly affect multimodal systems. Unequal representation may lead to unfair results. Combining modalities can sometimes increase this bias. Ethical AI requires fairness and balance. Researchers must carefully manage these risks.`
+  },
+  {
+    title: "Privacy Concerns",
+    bullets: [
+      "Handling sensitive personal data",
+      "Increased privacy risks",
+      "Strong security measures",
+      "Regulatory compliance",
+      "User data protection"
+    ],
+    notes: `Multimodal AI often handles sensitive personal information. Integrating data increases privacy risks. Strong security measures are necessary. Legal regulations must be followed. Protecting user data is a top priority.`
+  },
+  {
+    title: "Computational Cost",
+    bullets: [
+      "High hardware requirements",
+      "Energy consumption concerns",
+      "Scalability challenges",
+      "Need for efficiency",
+      "Sustainable AI development"
+    ],
+    notes: `Training multimodal AI requires huge computing power. It uses expensive hardware and a lot of energy. Scaling these systems is challenging. Efficiency improvements are needed. Sustainable AI development is important.`
+  },
+  {
+    title: "Ethical Risks",
+    bullets: [
+      "Transparency issues",
+      "Accountability requirements",
+      "Social impact concerns",
+      "Ethical decision-making",
+      "Responsible innovation"
+    ],
+    notes: `Advanced AI brings ethical concerns. Some systems lack transparency. Clear accountability is required. The social impact must be considered. Responsible development is essential.`
+  },
+  {
+    title: "Next-Generation AI",
+    bullets: [
+      "More adaptive systems",
+      "Improved reasoning abilities",
+      "Better context awareness",
+      "Increased autonomy",
+      "Rapid technological growth"
+    ],
+    notes: `Future AI systems will be more flexible and intelligent. Multimodal learning will improve reasoning skills. Context awareness will grow stronger. Machines will become more autonomous. Innovation will continue rapidly.`
+  },
+  {
+    title: "Human-AI Collaboration",
+    bullets: [
+      "Partnership with humans",
+      "Enhanced creativity",
+      "Better decision-making",
+      "Increased productivity",
+      "Collaborative future"
+    ],
+    notes: `AI will increasingly work alongside humans. It will enhance creativity and decision-making. Productivity will rise across industries. Humans and AI will act as partners. Collaboration will define the future.`
+  },
+  {
+    title: "Emerging Research Trends",
+    bullets: [
+      "Efficient AI development",
+      "Explainable systems",
+      "Self-supervised learning",
+      "Focus on ethics",
+      "Emerging architectures"
+    ],
+    notes: `Current research focuses on making AI more efficient and explainable. Self-supervised learning reduces the need for labeled data. Ethical AI is gaining more attention. New architectures are constantly being developed. Innovation is moving fast.`
+  },
+  {
+    title: "Conclusion & Q/A",
+    bullets: [
+      "Multimodal AI transformation",
+      "Human-like understanding",
+      "Wide industry applications",
+      "Ongoing challenges",
+      "Future opportunities"
+    ],
+    notes: `Multimodal AI is a powerful step forward in artificial intelligence. By combining different data types, it achieves more human-like understanding. Its applications cover many industries. Although challenges remain, progress is accelerating. Thank you for listening — I welcome your questions.`
+  }
+
+
+];
+
+/* ===== Slide Rendering ===== */
+
+const slidesContainer = document.querySelector('#slides-container');
+
+slideData.forEach((slide, i) => {
+  const section = document.createElement('section');
+  section.className = 'slide' + (i === 0 ? ' active' : '');
+
+  const bulletsHTML = slide.bullets
+  .map(b => `<li>• ${b}</li>`)
+   /* .map(b => `<li><i class="fa-solid fa-circle-check icon"></i>${b}</li>`)*/
+    .join('');
+
+  section.innerHTML = `
+    <div class="slide-content">
+      <h1>${slide.title}</h1>
+      <ul>${bulletsHTML}</ul>
+      <div class="speaker-notes">${slide.notes}</div>
+    </div>
+    <img src="images/slide${i + 1}.jpg" class="slide-image" alt="Slide image">
+  `;
+
+  slidesContainer.appendChild(section);
+});
+
+const slides = document.querySelectorAll('.slide');
+const dotsContainer = document.querySelector('.dots');
+const counter = document.querySelector('.counter');
+let current = 0;
+
+/* ===== Dots ===== */
+
+slides.forEach((_, i) => {
+  const dot = document.createElement('div');
+  dot.classList.add('dot');
+  dot.onclick = () => goToSlide(i);
+  dotsContainer.appendChild(dot);
+});
+
+/* ===== UI Update ===== */
+
+function updateUI() {
+  slides.forEach((slide, i) => {
+    slide.classList.toggle('active', i === current);
+
+    const items = slide.querySelectorAll('li');
+    items.forEach(item => {
+      item.style.animation = 'none';
+      item.offsetHeight;
+      item.style.animation = '';
+    });
+
+    dotsContainer.children[i].classList.toggle('active', i === current);
+  });
+
+  counter.textContent = `Slide ${current + 1} of ${slides.length}`;
+}
+
+function goToSlide(index) {
+  current = (index + slides.length) % slides.length;
+  updateUI();
+}
+
+/* ===== Controls ===== */
+
+document.getElementById('next').onclick = () => goToSlide(current + 1);
+document.getElementById('prev').onclick = () => goToSlide(current - 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') goToSlide(current + 1);
+  if (e.key === 'ArrowLeft') goToSlide(current - 1);
+});
+
+/* ===== Speaker Notes Toggle ===== 
+
+slidesContainer.addEventListener('click', e => {
+  if (e.target.classList.contains('toggle-notes')) {
+    const notes = e.target.nextElementSibling;
+    notes.style.display =
+      notes.style.display === 'block' ? 'none' : 'block';
+  }
+});*/
+
+updateUI();
+
+</script>
+
+</body>
+</html>
